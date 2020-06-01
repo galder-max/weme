@@ -14,7 +14,6 @@ list_to_vec <- function(tc){
     return(out)
 }
 
-
 get_data <- function(fns){
     ncs = list()
     alldf = data.frame()
@@ -61,7 +60,6 @@ get_data <- function(fns){
             }
             to_r = which(fits==min(fits))[1]
             tm = tm[,-to_r]
-
             alldf = alldf[alldf$method != ms[[to_r]],]
             ncs = ncs[-to_r]
             mphi = apply(tm,1,median)
@@ -120,7 +118,6 @@ get_data_perms <- function(t_fns){
             }
             to_r = which(fits==min(fits))[1]
             tm = tm[,-to_r]
-
             alldf = alldf[alldf$method != ms[[to_r]],]
             ncs = ncs[-to_r]
             mphi = apply(tm,1,median)
@@ -131,7 +128,6 @@ get_data_perms <- function(t_fns){
     alldf = rbind(alldf,outdf)
     return(list(median(list_to_vec(ncs)),alldf))
 }
-
 
 pssms_to_vec <- function(pssms,med){
     d = data.frame(r_ssms=pssms)
@@ -158,7 +154,6 @@ pssms_to_vec <- function(pssms,med){
     }
     return(outv)
 }
-
 
 pssms_to_df <- function(pssms,med){
     d = data.frame(r_ssms=pssms)
@@ -213,7 +208,6 @@ pssms_to_vec_median_purity <- function(pssms,med,purity){
     return(outv)
 }
 
-
 pssms_to_vec_median <- function(pssms,med){
     d = data.frame(r_ssms=pssms)
     d$proportion = rep(0,length(pssms))
@@ -239,7 +233,6 @@ pssms_to_vec_median <- function(pssms,med){
     }
     return(outv)
 }
-
 
 pssms_to_df_median <- function(pssms,med){
     d = data.frame(r_ssms=pssms)
@@ -295,8 +288,6 @@ pssms_to_df_median_purity <- function(pssms,med,purity){
     outdf = data.frame(pssm=outv[,2],phi=outv[,1],method="consensus")
 }
 
-
-
 compute_fit <- function(v1,v2){
     return(1-sum(abs(v1-v2))/length(v1))
 }
@@ -310,14 +301,12 @@ nm_search <- function(nbps,mdf){
         cv = pssms_to_vec_median(pssms,mdf)
         return(compute_fit(cv,mdf$phi))
     }
-
     solnp(best_pssms, #starting values (random - obviously need to be positive and sum to 15)
       score, #function to optimise
       eqfun=sum, #equality function
       eqB=1.0,   #the equality constraint
       LB=rep(0,nbps), #lower bound for parameters i.e. greater than zero
       UB=rep(1,nbps))
-
 }
 
 
@@ -325,7 +314,6 @@ grid_search <- function(nbps,mdf){
     nattempt=0
     mv = mdf$phi
     best_pssms = mat.or.vec(nbps,1)
-
     best_score=-1
     for (i in 1:(F^(nbps-1)))
     {
@@ -352,7 +340,6 @@ grid_search_purity <- function(nbps,mdf,purity){
     nattempt=0
     mv = mdf$phi
     best_pssms = mat.or.vec(nbps,1)
-
     best_score=-1
     for (i in 1:(F^(nbps-1)))
     {
@@ -425,7 +412,6 @@ make_subclonal_structure <- function(sid, pssms, med){
     }
     sc = data.frame(cluster=1:length(pssms),n_ssms=pssms*100,proportion=d$proportion)
     write.table(file=paste(sid,"_subclonal_structure.txt",sep=""),sc,sep="\t",quote=FALSE,row.names=FALSE)
-
 }
 
 make_subclonal_structure_purity <- function(sid, pssms, med, purity){
@@ -446,9 +432,7 @@ make_subclonal_structure_purity <- function(sid, pssms, med, purity){
     }
     sc = data.frame(cluster=1:length(pssms),n_ssms=pssms*100,proportion=d$proportion)
     write.table(file=paste(sid,"_subclonal_structure.txt",sep=""),sc,sep="\t",quote=FALSE,row.names=FALSE)
-
 }
-
 
 genconsensus <- function(sids, fns, ncores=NULL, rounddown=TRUE, purities=NULL)
 {
@@ -493,52 +477,4 @@ genconsensus <- function(sids, fns, ncores=NULL, rounddown=TRUE, purities=NULL)
     }
 }
 
-make_table <- function(out_fn) {
-    fns = Sys.glob("*_subclonal_structure.txt")
-    sids = mat.or.vec(0,0)
-    for (fn in fns){
-        sid = paste(strsplit(fn,"_")[[1]][1:3],collapse="_")
-    }
-    sids = unique(sids)
-    out = data.frame(cancer_type=character(),
-                     samplename=character(),
-                     num_suclones=integer(),
-                     purity=double(),
-                     ploidy=character(),
-                     num_clonal=integer(),
-                     num_subclonal=integer(),
-                     frac_clonal=double(),
-                     noCNA=character(),
-                     clonal=character(),
-                     subclonal=character(),
-                     hasWGD=character(),stringsAsFactors=FALSE)
-    for (sid in sids){
-        sc = read.csv(file=paste(sid,"_subclonal_structure.txt",sep=""),sep="\t",stringsAsFactors=FALSE)
-        out = rbind(out,data.frame("NA",sid,as.numeric(nrow(sc)-1),sc$proportion[1],"NA",sc$n_ssms[1],100-sc$n_ssms[1],sc$n_ssms[1]/100.0,"NA","NA","NA","NA"))
-    }
-    colnames(out) = c("cancer_type", "samplename", "num_subclones", "purity", "ploidy", "num_clonal", "num_subclonal", "frac_clonal", "noCNA", "clonal","subclonal", "hasWGD")
-    write.table(out,file=out_fn,sep="\t",row.names=FALSE,quote=FALSE)
-}
-
-count_submissions <- function(sids)
-{
-    cnts = mat.or.vec(0,0)
-    for (sid in sids){
-        fns = Sys.glob(paste("*/",sid,"_subclonal_structure.txt",sep=""))
-        cnts = c(cnts,length(fns))
-    }
-    cnts
-}
-
-correct_purity <- function(purity_file)
-{
-    purity = read.csv(purity_file,sep="\t")
-    fns = Sys.glob("*_subclonal_structure.txt")
-    for (fn in fns){
-        sid = strsplit(fn,"_")[[1]][1]
-        d = read.csv(fn,sep="\t")
-        d$proportion[1] = purity$purity[purity$samplename==sid][1]
-        write.table(file=fn,d,sep="\t",quote=FALSE,row.names=FALSE)
-    }
-}
 
